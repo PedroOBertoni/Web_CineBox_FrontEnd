@@ -189,7 +189,7 @@ npm run preview  # Visualiza o build de produção localmente
 | **Instituição** | Uni-FACEF — Centro Universitário Municipal de Franca |
 | **Curso** | Análise e Desenvolvimento de Sistemas |
 | **Disciplina** | Desenvolvimento Web |
-| **Ano** | 2025 |
+| **Ano** | 2026 |
 
 ---
 
