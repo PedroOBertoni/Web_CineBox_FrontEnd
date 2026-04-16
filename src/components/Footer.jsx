@@ -71,7 +71,7 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-[#1D4ED8]/10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <p className="text-slate-600 text-xs">© 2025 CineBox. Todos os direitos reservados.</p>
+          <p className="text-slate-600 text-xs">© 2026 CineBox. Todos os direitos reservados.</p>
           <p className="text-slate-700 text-xs">Projeto acadêmico — FACEF 2026</p>
         </div>
       </div>
