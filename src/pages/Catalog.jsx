@@ -141,10 +141,6 @@ export default function Catalog() {
       <Navbar />
 
       <div className="pt-28 pb-8 px-8 md:px-12" style={{ background: "linear-gradient(to bottom, #0D1526, #060B18)" }}>
-        <h1 className="text-3xl md:text-4xl font-black text-white mb-1">
-          🎬 <span className="text-gradient">Catálogo</span>
-        </h1>
-        <p className="text-slate-400 text-sm mb-8">Explore milhares de filmes</p>
         <SearchBar
           onResults={handleSearchResults}
           onSearching={handleSearching}
