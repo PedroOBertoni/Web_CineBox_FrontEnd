@@ -1,6 +1,6 @@
 # 🎬 CineBox
 
-> Trabalho acadêmico desenvolvido para a disciplina de **Desenvolvimento Web** do curso de **Análise e Desenvolvimento de Sistemas** da **Uni-FACEF — Centro Universitário Municipal de Franca**.
+> Trabalho acadêmico desenvolvido para a disciplina de **Desenvolvimento Web** do curso de **Engenharia de Software** da **Uni-FACEF — Centro Universitário Municipal de Franca**.
 
 🔗 **Acesse o projeto:** [cinebox-stream.vercel.app](https://cinebox-stream.vercel.app/)
 
@@ -310,7 +310,7 @@ npm run preview  # Visualiza o build de produção localmente
 | | |
 |---|---|
 | **Instituição** | Uni-FACEF — Centro Universitário Municipal de Franca |
-| **Curso** | Análise e Desenvolvimento de Sistemas |
+| **Curso** | Engenharia de Software |
 | **Disciplina** | Desenvolvimento Web |
 | **Ano** | 2026 |
 
