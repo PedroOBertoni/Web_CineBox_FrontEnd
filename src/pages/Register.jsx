@@ -13,9 +13,9 @@ const GoogleIcon = () => (
 );
 
 const PLANS = [
-  { value: "basico", label: "Básico", price: "R$ 19,90/mês", desc: "HD · 1 tela" },
-  { value: "intermediario", label: "Intermediário", price: "R$ 29,90/mês", desc: "Full HD · 2 telas" },
-  { value: "avancado", label: "Avançado", price: "R$ 49,90/mês", desc: "4K · 4 telas" },
+  { value: "basic", label: "Básico", price: "R$ 18,90/mês", desc: "HD · 1 tela" },
+  { value: "standard", label: "Padrão", price: "R$ 28,90/mês", desc: "Full HD · 2 telas" },
+  { value: "premium", label: "Premium", price: "R$ 39,90/mês", desc: "4K · 4 telas" },
 ];
 
 export default function Register() {
@@ -57,9 +57,9 @@ export default function Register() {
     setError("");
     setLoading(true);
 
-    // Se veio do Google, usa loginWithGoogle definitivo (já tem conta criada no Firebase)
+    // Se veio do Google, usa loginWithGoogle definitivo passando o plano
     if (googleMode) {
-      const result = await loginWithGoogle();
+      const result = await loginWithGoogle(form.plan);
       if (!result.ok && result.error) { setLoading(false); return setError(result.error); }
       navigate("/");
       return;
@@ -71,7 +71,7 @@ export default function Register() {
     if (form.password.length < 6)
       return setError("A senha deve ter pelo menos 6 caracteres.");
 
-    const result = await register(form.email, form.password, form.name);
+    const result = await register(form.email, form.password, form.name, form.plan);
     if (!result.ok) { setLoading(false); return setError(result.error); }
     navigate("/");
   };

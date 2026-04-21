@@ -11,22 +11,35 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
 } from "firebase/auth";
-import { auth } from "../firebase";
+import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
+import { auth, db } from "../firebase";
 
 export const AuthContext = createContext();
+
+// Salva ou atualiza dados do usuário no Firestore
+const saveUserDoc = async (uid, data) => {
+  await setDoc(doc(db, "users", uid), data, { merge: true });
+};
+
+// Busca dados do usuário no Firestore
+const getUserDoc = async (uid) => {
+  const snap = await getDoc(doc(db, "users", uid));
+  return snap.exists() ? snap.data() : null;
+};
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Escuta mudanças de estado de autenticação do Firebase
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
+        const data = await getUserDoc(firebaseUser.uid);
         setUser({
           uid: firebaseUser.uid,
           email: firebaseUser.email,
           name: firebaseUser.displayName || firebaseUser.email.split("@")[0],
+          plan: data?.plan || null,
         });
       } else {
         setUser(null);
@@ -36,11 +49,17 @@ export function AuthProvider({ children }) {
     return () => unsubscribe();
   }, []);
 
-  const register = async (email, password, name) => {
+  const register = async (email, password, name, plan) => {
     try {
       const credential = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(credential.user, { displayName: name });
-      setUser({ uid: credential.user.uid, email, name });
+      await saveUserDoc(credential.user.uid, {
+        name,
+        email,
+        plan,
+        createdAt: serverTimestamp(),
+      });
+      setUser({ uid: credential.user.uid, email, name, plan });
       return { ok: true };
     } catch (err) {
       return { ok: false, error: firebaseError(err.code) };
@@ -57,12 +76,27 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const loginWithGoogle = async () => {
+  const loginWithGoogle = async (plan = null) => {
     try {
       const provider = new GoogleAuthProvider();
       const credential = await signInWithPopup(auth, provider);
       const u = credential.user;
-      setUser({ uid: u.uid, email: u.email, name: u.displayName || u.email.split("@")[0] });
+      // Se vier com plano (fluxo de cadastro), salva no Firestore
+      if (plan) {
+        await saveUserDoc(u.uid, {
+          name: u.displayName || u.email.split("@")[0],
+          email: u.email,
+          plan,
+          createdAt: serverTimestamp(),
+        });
+      }
+      const data = await getUserDoc(u.uid);
+      setUser({
+        uid: u.uid,
+        email: u.email,
+        name: u.displayName || u.email.split("@")[0],
+        plan: data?.plan || plan || null,
+      });
       return { ok: true };
     } catch (err) {
       if (err.code === "auth/popup-closed-by-user") return { ok: false, error: null };
@@ -70,13 +104,11 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // Abre popup do Google apenas para obter nome e email — não loga ainda
   const getGoogleProfile = async () => {
     try {
       const provider = new GoogleAuthProvider();
       const credential = await signInWithPopup(auth, provider);
       const u = credential.user;
-      // Desloga imediatamente — o cadastro ainda não foi finalizado
       await signOut(auth);
       return { ok: true, name: u.displayName || "", email: u.email, uid: u.uid };
     } catch (err) {
@@ -85,16 +117,25 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const updatePlan = async (plan) => {
+    try {
+      await saveUserDoc(auth.currentUser.uid, { plan });
+      setUser((u) => ({ ...u, plan }));
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, error: "Erro ao atualizar plano. Tente novamente." };
+    }
+  };
+
   const logout = () => signOut(auth);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, loginWithGoogle, getGoogleProfile, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, loginWithGoogle, getGoogleProfile, updatePlan, logout }}>
       {!loading && children}
     </AuthContext.Provider>
   );
 }
 
-// Traduz os códigos de erro do Firebase para português
 function firebaseError(code) {
   const errors = {
     "auth/email-already-in-use": "Este e-mail já está cadastrado.",
