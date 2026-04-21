@@ -23,23 +23,39 @@ export const fetchTrending = async () => {
 };
 
 export const fetchByGenre = async (genreId, page = 1) => {
-  const data = await get("/discover/movie", {
-    with_genres: genreId,
-    sort_by: "popularity.desc",
-    "vote_count.gte": 200,
-    page,
-  });
-  return { movies: withPoster(data.results), totalPages: Math.min(data.total_pages, 20) };
+  const p1 = page * 2 - 1;
+  const p2 = page * 2;
+  const [d1, d2] = await Promise.all([
+    get("/discover/movie", { with_genres: genreId, sort_by: "popularity.desc", "vote_count.gte": 200, page: p1 }),
+    get("/discover/movie", { with_genres: genreId, sort_by: "popularity.desc", "vote_count.gte": 200, page: p2 }),
+  ]);
+  const movies = withPoster([...(d1.results || []), ...(d2.results || [])]).slice(0, 24);
+  const totalPages = Math.min(Math.floor((d1.total_pages || 1) / 2), 20);
+  return { movies, totalPages };
 };
 
 export const fetchPopular = async (page = 1) => {
-  const data = await get("/movie/popular", { page });
-  return { movies: withPoster(data.results), totalPages: Math.min(data.total_pages, 20) };
+  const p1 = page * 2 - 1;
+  const p2 = page * 2;
+  const [d1, d2] = await Promise.all([
+    get("/movie/popular", { page: p1 }),
+    get("/movie/popular", { page: p2 }),
+  ]);
+  const movies = withPoster([...(d1.results || []), ...(d2.results || [])]).slice(0, 24);
+  const totalPages = Math.min(Math.floor((d1.total_pages || 1) / 2), 20);
+  return { movies, totalPages };
 };
 
 export const searchMovies = async (query, page = 1) => {
-  const data = await get("/search/movie", { query, page, include_adult: false });
-  return { movies: withPoster(data.results), totalPages: Math.min(data.total_pages || 1, 10) };
+  const p1 = page * 2 - 1;
+  const p2 = page * 2;
+  const [d1, d2] = await Promise.all([
+    get("/search/movie", { query, page: p1, include_adult: false }),
+    get("/search/movie", { query, page: p2, include_adult: false }),
+  ]);
+  const movies = withPoster([...(d1.results || []), ...(d2.results || [])]).slice(0, 24);
+  const totalPages = Math.min(Math.floor((d1.total_pages || 1) / 2), 10);
+  return { movies, totalPages };
 };
 
 export const fetchMovieDetails = async (id) => {

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { fetchByGenre, fetchTrending } from "../api/tmdb";
 import MovieCard from "./MovieCard";
 
-const CARD_WIDTH = 174; // largura do card + gap em px
+const CARD_WIDTH = 164;
 
 export default function MovieRow({ title, genreId, trending }) {
   const [movies, setMovies] = useState([]);
@@ -67,7 +67,7 @@ export default function MovieRow({ title, genreId, trending }) {
             style={{ transform: `translateX(-${offset}px)` }}
           >
             {movies.map((movie) => (
-              <div key={movie.id} className="min-w-[162px] md:min-w-[170px] flex-shrink-0">
+              <div key={movie.id} className="w-[150px] md:w-[160px] flex-shrink-0">
                 <MovieCard movie={movie} />
               </div>
             ))}
