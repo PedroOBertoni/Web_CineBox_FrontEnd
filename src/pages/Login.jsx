@@ -16,8 +16,7 @@ export default function Login() {
     if (!email || !password) return setError("Preencha todos os campos.");
     setError("");
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 600));
-    const result = login(email, password);
+    const result = await login(email, password);
     if (!result.ok) {
       setLoading(false);
       return setError(result.error);
@@ -33,21 +32,9 @@ export default function Login() {
       <div className="flex items-center justify-center min-h-screen px-4 pt-16">
         <div className="w-full max-w-md relative z-10">
 
-          {/* Aviso de sessão */}
-          <div className="flex items-start gap-3 bg-[#0F1C35] border border-[#1D4ED8]/25 rounded-xl px-4 py-3 mb-6">
-            <span className="text-[#60A5FA] mt-0.5 flex-shrink-0">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-              </svg>
-            </span>
-            <p className="text-slate-400 text-xs leading-relaxed">
-              <span className="text-slate-300 font-medium">Modo demonstração.</span> O cadastro e login são apenas locais e temporários — os dados existem somente durante esta sessão do navegador e são perdidos ao recarregar ou fechar a aba.
-            </p>
-          </div>
-
           <div className="glass rounded-2xl p-8">
             <h2 className="text-2xl font-bold text-white mb-1">Entrar na conta</h2>
-            <p className="text-slate-500 text-sm mb-6">Use as credenciais do seu cadastro desta sessão</p>
+            <p className="text-slate-500 text-sm mb-6">Bem-vindo de volta ao CineBox</p>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
@@ -87,7 +74,7 @@ export default function Login() {
                 className="w-full py-3 bg-[#1D4ED8] hover:bg-[#1E40AF] rounded-xl font-semibold text-white transition-all disabled:opacity-60 disabled:cursor-not-allowed mt-2"
                 style={{ boxShadow: "0 0 20px rgba(29,78,216,0.35)" }}
               >
-                {loading ? "Verificando..." : "Entrar"}
+                {loading ? "Entrando..." : "Entrar"}
               </button>
             </form>
 

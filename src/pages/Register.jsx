@@ -26,8 +26,7 @@ export default function Register() {
       return setError("A senha deve ter pelo menos 6 caracteres.");
     setError("");
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 600));
-    const result = register(form.email, form.password, form.name);
+    const result = await register(form.email, form.password, form.name);
     if (!result.ok) {
       setLoading(false);
       return setError(result.error);
@@ -49,21 +48,9 @@ export default function Register() {
       <div className="flex items-center justify-center min-h-screen px-4 py-8 pt-24">
         <div className="w-full max-w-md relative z-10">
 
-          {/* Aviso de sessão */}
-          <div className="flex items-start gap-3 bg-[#0F1C35] border border-[#1D4ED8]/25 rounded-xl px-4 py-3 mb-6">
-            <span className="text-[#60A5FA] mt-0.5 flex-shrink-0">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-              </svg>
-            </span>
-            <p className="text-slate-400 text-xs leading-relaxed">
-              <span className="text-slate-300 font-medium">Modo demonstração.</span> O cadastro é apenas local e temporário — seus dados existem somente durante esta sessão do navegador e são perdidos ao recarregar ou fechar a aba.
-            </p>
-          </div>
-
           <div className="glass rounded-2xl p-8">
             <h2 className="text-2xl font-bold text-white mb-1">Criar conta</h2>
-            <p className="text-slate-500 text-sm mb-6">Válido apenas para esta sessão do navegador</p>
+            <p className="text-slate-500 text-sm mb-6">Crie sua conta e comece a assistir</p>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               {fields.map(({ field, label, type, placeholder }) => (
