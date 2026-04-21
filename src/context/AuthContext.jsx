@@ -5,6 +5,11 @@ import {
   signOut,
   onAuthStateChanged,
   updateProfile,
+  browserSessionPersistence,
+  browserLocalPersistence,
+  setPersistence,
+  GoogleAuthProvider,
+  signInWithPopup,
 } from "firebase/auth";
 import { auth } from "../firebase";
 
@@ -42,8 +47,9 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const login = async (email, password) => {
+  const login = async (email, password, remember = false) => {
     try {
+      await setPersistence(auth, remember ? browserLocalPersistence : browserSessionPersistence);
       await signInWithEmailAndPassword(auth, email, password);
       return { ok: true };
     } catch (err) {
@@ -51,10 +57,38 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const loginWithGoogle = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      const credential = await signInWithPopup(auth, provider);
+      const u = credential.user;
+      setUser({ uid: u.uid, email: u.email, name: u.displayName || u.email.split("@")[0] });
+      return { ok: true };
+    } catch (err) {
+      if (err.code === "auth/popup-closed-by-user") return { ok: false, error: null };
+      return { ok: false, error: firebaseError(err.code) };
+    }
+  };
+
+  // Abre popup do Google apenas para obter nome e email — não loga ainda
+  const getGoogleProfile = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      const credential = await signInWithPopup(auth, provider);
+      const u = credential.user;
+      // Desloga imediatamente — o cadastro ainda não foi finalizado
+      await signOut(auth);
+      return { ok: true, name: u.displayName || "", email: u.email, uid: u.uid };
+    } catch (err) {
+      if (err.code === "auth/popup-closed-by-user") return { ok: false, error: null };
+      return { ok: false, error: firebaseError(err.code) };
+    }
+  };
+
   const logout = () => signOut(auth);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, loginWithGoogle, getGoogleProfile, logout }}>
       {!loading && children}
     </AuthContext.Provider>
   );

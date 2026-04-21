@@ -3,6 +3,15 @@ import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import Navbar from "../components/Navbar";
 
+const GoogleIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 48 48">
+    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+    <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+  </svg>
+);
+
 const PLANS = [
   { value: "basico", label: "Básico", price: "R$ 19,90/mês", desc: "HD · 1 tela" },
   { value: "intermediario", label: "Intermediário", price: "R$ 29,90/mês", desc: "Full HD · 2 telas" },
@@ -10,35 +19,62 @@ const PLANS = [
 ];
 
 export default function Register() {
-  const { register } = useContext(AuthContext);
+  const { register, loginWithGoogle, getGoogleProfile } = useContext(AuthContext);
   const [form, setForm] = useState({ name: "", email: "", password: "", plan: "" });
+  const [googleMode, setGoogleMode] = useState(false); // true = campos preenchidos pelo Google
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const navigate = useNavigate();
 
   const set = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
 
+  // Pré-preenche com dados do Google sem logar
+  const handleGoogleFill = async () => {
+    setGoogleLoading(true);
+    setError("");
+    const result = await getGoogleProfile();
+    setGoogleLoading(false);
+    if (!result.ok) {
+      if (result.error) setError(result.error);
+      return;
+    }
+    setForm((f) => ({ ...f, name: result.name, email: result.email, password: "" }));
+    setGoogleMode(true);
+  };
+
+  // Cancela o modo Google e limpa os campos
+  const cancelGoogle = () => {
+    setForm({ name: "", email: "", password: "", plan: "" });
+    setGoogleMode(false);
+    setError("");
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.name || !form.email || !form.password || !form.plan)
+    if (!form.plan) return setError("Selecione um plano para continuar.");
+
+    setError("");
+    setLoading(true);
+
+    // Se veio do Google, usa loginWithGoogle definitivo (já tem conta criada no Firebase)
+    if (googleMode) {
+      const result = await loginWithGoogle();
+      if (!result.ok && result.error) { setLoading(false); return setError(result.error); }
+      navigate("/");
+      return;
+    }
+
+    // Cadastro normal por email/senha
+    if (!form.name || !form.email || !form.password)
       return setError("Preencha todos os campos.");
     if (form.password.length < 6)
       return setError("A senha deve ter pelo menos 6 caracteres.");
-    setError("");
-    setLoading(true);
+
     const result = await register(form.email, form.password, form.name);
-    if (!result.ok) {
-      setLoading(false);
-      return setError(result.error);
-    }
+    if (!result.ok) { setLoading(false); return setError(result.error); }
     navigate("/");
   };
-
-  const fields = [
-    { field: "name", label: "Nome completo", type: "text", placeholder: "Seu nome" },
-    { field: "email", label: "E-mail", type: "email", placeholder: "seu@email.com" },
-    { field: "password", label: "Senha", type: "password", placeholder: "Mínimo 6 caracteres" },
-  ];
 
   return (
     <div className="min-h-screen bg-[#060B18] relative overflow-hidden">
@@ -47,27 +83,72 @@ export default function Register() {
 
       <div className="flex items-center justify-center min-h-screen px-4 py-8 pt-24">
         <div className="w-full max-w-md relative z-10">
-
           <div className="glass rounded-2xl p-8">
             <h2 className="text-2xl font-bold text-white mb-1">Criar conta</h2>
             <p className="text-slate-500 text-sm mb-6">Crie sua conta e comece a assistir</p>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              {fields.map(({ field, label, type, placeholder }) => (
-                <div key={field}>
-                  <label className="text-slate-400 text-xs font-medium mb-1.5 block">{label}</label>
+
+              {/* Nome */}
+              <div>
+                <label className="text-slate-400 text-xs font-medium mb-1.5 block">Nome completo</label>
+                <input
+                  type="text"
+                  placeholder="Seu nome"
+                  value={form.name}
+                  onChange={set("name")}
+                  readOnly={googleMode}
+                  className="w-full px-4 py-3 bg-[#111827] border border-slate-700 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-[#1D4ED8] transition-all text-sm"
+                  style={googleMode ? { opacity: 0.6, cursor: "not-allowed" } : {}}
+                />
+              </div>
+
+              {/* Email */}
+              <div>
+                <label className="text-slate-400 text-xs font-medium mb-1.5 block">E-mail</label>
+                <input
+                  type="email"
+                  placeholder="seu@email.com"
+                  value={form.email}
+                  onChange={set("email")}
+                  readOnly={googleMode}
+                  className="w-full px-4 py-3 bg-[#111827] border border-slate-700 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-[#1D4ED8] transition-all text-sm"
+                  style={googleMode ? { opacity: 0.6, cursor: "not-allowed" } : {}}
+                />
+              </div>
+
+              {/* Senha — oculta no modo Google */}
+              {!googleMode && (
+                <div>
+                  <label className="text-slate-400 text-xs font-medium mb-1.5 block">Senha</label>
                   <input
-                    type={type}
-                    placeholder={placeholder}
-                    value={form[field]}
-                    onChange={set(field)}
+                    type="password"
+                    placeholder="Mínimo 6 caracteres"
+                    value={form.password}
+                    onChange={set("password")}
                     className="w-full px-4 py-3 bg-[#111827] border border-slate-700 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-[#1D4ED8] transition-all text-sm"
                   />
                 </div>
-              ))}
+              )}
 
+              {/* Badge Google ativo */}
+              {googleMode && (
+                <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-[#111827] border border-slate-700">
+                  <div className="flex items-center gap-2 text-slate-400 text-xs">
+                    <GoogleIcon />
+                    <span>Dados preenchidos via Google</span>
+                  </div>
+                  <button type="button" onClick={cancelGoogle} className="text-slate-600 hover:text-slate-400 text-xs underline transition-colors">
+                    Cancelar
+                  </button>
+                </div>
+              )}
+
+              {/* Plano */}
               <div>
-                <label className="text-slate-400 text-xs font-medium mb-2 block">Plano escolhido</label>
+                <label className="text-slate-400 text-xs font-medium mb-2 block">
+                  Plano escolhido <span className="text-red-400">*</span>
+                </label>
                 <div className="grid grid-cols-3 gap-2">
                   {PLANS.map((p) => {
                     const active = form.plan === p.value;
@@ -90,12 +171,8 @@ export default function Register() {
                             </svg>
                           </span>
                         )}
-                        <span className={`text-xs font-semibold mb-0.5 ${active ? "text-white" : "text-slate-300"}`}>
-                          {p.label}
-                        </span>
-                        <span className={`text-xs font-bold ${active ? "text-[#60A5FA]" : "text-slate-400"}`}>
-                          {p.price}
-                        </span>
+                        <span className={`text-xs font-semibold mb-0.5 ${active ? "text-white" : "text-slate-300"}`}>{p.label}</span>
+                        <span className={`text-xs font-bold ${active ? "text-[#60A5FA]" : "text-slate-400"}`}>{p.price}</span>
                         <span className="text-slate-600 text-xs mt-0.5">{p.desc}</span>
                       </button>
                     );
@@ -131,6 +208,31 @@ export default function Register() {
                 Entrar
               </Link>
             </p>
+
+            {/* Divisor */}
+            {!googleMode && (
+              <>
+                <div className="flex items-center gap-3 my-5">
+                  <div className="flex-1 h-px bg-slate-800" />
+                  <span className="text-slate-600 text-xs">ou preencha com</span>
+                  <div className="flex-1 h-px bg-slate-800" />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleGoogleFill}
+                  disabled={googleLoading}
+                  className="w-full flex items-center justify-center gap-3 py-3 rounded-xl border border-slate-700 bg-[#111827] hover:bg-[#1a2332] hover:border-slate-600 transition-all text-sm font-medium text-slate-300 disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {googleLoading ? (
+                    <div className="w-4 h-4 border-2 border-slate-500 border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <GoogleIcon />
+                  )}
+                  Preencher com Google
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
