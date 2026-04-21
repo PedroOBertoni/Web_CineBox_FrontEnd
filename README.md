@@ -84,6 +84,7 @@ O projeto consome a **The Movie Database API (TMDB)**, uma API pública e gratui
 projeto_cinebox/
 ├── public/
 │   └── assets/
+│       └── CineBoxWeb.png       # Diagrama de arquitetura da aplicação
 ├── src/
 │   ├── api/
 │   │   └── tmdb.js              # Camada de integração com a TMDB API
@@ -109,6 +110,23 @@ projeto_cinebox/
 ├── package.json
 └── vite.config.js
 ```
+
+---
+
+## 🏗️ Arquitetura da Aplicação
+
+O diagrama abaixo ilustra a arquitetura geral do CineBox, mostrando o fluxo de dados entre os componentes, páginas, contexto de autenticação e a API externa.
+
+![Arquitetura do CineBox](./public/assets/CineBoxWeb.png)
+
+---
+
+## 📸 Screenshots
+
+> _Prints da interface da aplicação em funcionamento._
+
+<!-- Adicione os prints abaixo seguindo o mesmo padrão: -->
+<!-- ![Descrição](./public/assets/screenshots/nome-do-arquivo.png) -->
 
 ---
 
